@@ -8,6 +8,7 @@ class CompilerParser(Parser):
 	def __init__(self):
 		self.debug = True
 
+	# Program
 	@_("DECLARE declarations BEGIN commands END")
 	def program(self, token):
 		if self.debug:
@@ -83,7 +84,7 @@ class CompilerParser(Parser):
 			print(f"Condition: {token.cond}, Commands: {token.commands}")
 		return token
 
-	@_("DO commands WHILE cond ENDDO")
+	@_("REPEAT commands UNTIL cond ';'")
 	def command(self, token):
 		if self.debug:
 			print(f"Condition: {token.cond}, Commands: {token.commands}")
@@ -111,4 +112,116 @@ class CompilerParser(Parser):
 	def command(self, token):
 		if self.debug:
 			print(f"Write value: {token.value}")
+		return token
+
+	# Expression
+	@_("value")
+	def expr(self, token):
+		if self.debug:
+			print(f"Expression0 value: {token.value}")
+		return token
+
+	@_("value ADD value")
+	def expr(self, token):
+		if self.debug:
+			print(f"Expression1 values: {token.value0, token.value1}")
+		return token
+
+	@_("value SUB value")
+	def expr(self, token):
+		if self.debug:
+			print(f"Expression2 values: {token.value0, token.value1}")
+		return token
+
+	@_("value MUL value")
+	def expr(self, token):
+		if self.debug:
+			print(f"Expression3 values: {token.value0, token.value1}")
+		return token
+
+	@_("value DIV value")
+	def expr(self, token):
+		if self.debug:
+			print(f"Expression4 values: {token.value0, token.value1}")
+		return token
+
+	@_("value MOD value")
+	def expr(self, token):
+		if self.debug:
+			print(f"Expression5 values: {token.value0, token.value1}")
+		return token
+
+	# Condition
+	@_("value EQ value")
+	def cond(self, token):
+		if self.debug:
+			print(f"Cond1 values: {token.value0, token.value1}")
+		return token
+
+	@_("value NEQ value")
+	def cond(self, token):
+		if self.debug:
+			print(f"Cond2 values: {token.value0, token.value1}")
+		return token
+
+	@_("value LTE value")
+	def cond(self, token):
+		if self.debug:
+			print(f"Cond3 values: {token.value0, token.value1}")
+		return token
+
+	@_("value GTE value")
+	def cond(self, token):
+		if self.debug:
+			print(f"Cond4 values: {token.value0, token.value1}")
+		return token
+
+	@_("value LT value")
+	def cond(self, token):
+		if self.debug:
+			print(f"Cond5 values: {token.value0, token.value1}")
+		return token
+
+	@_("value GT value")
+	def cond(self, token):
+		if self.debug:
+			print(f"Cond6 values: {token.value0, token.value1}")
+		return token
+
+	# Value
+	@_("NUM")
+	def value(self, token):
+		if self.debug:
+			print(f"Number: {token.NUM}")
+		return token
+
+	@_("id")
+	def value(self, token):
+		if self.debug:
+			print(f"Identifier: {token.id}")
+		return token
+
+	# Identifier
+	@_("ID")
+	def iter(self, token):
+		if self.debug:
+			print(f"Identifier: {token.ID}")
+		return token
+
+	@_("ID")
+	def id(self, token):
+		if self.debug:
+			print(f"ID identifier: {token.ID}")
+		return token
+
+	@_("ID '(' ID ')'")
+	def id(self, token):
+		if self.debug:
+			print(f"ID identifiers: {token.ID0, token.ID1}")
+		return token
+
+	@_("ID '(' NUM ')'")
+	def id(self, token):
+		if self.debug:
+			print(f"Identifier: {token.ID}, Number: {token.NUM}")
 		return token
