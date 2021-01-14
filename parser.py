@@ -65,25 +65,25 @@ class CompilerParser(Parser):
 	def command(self, token):
 		if self.debug:
 			print(f"Command0, ID: {token.id}, Expression: {token.expr}")
-		return token
+		return CommandAssign(token.lineno, token.id, token.expr)
 
 	@_("IF cond THEN commands ELSE commands ENDIF")
 	def command(self, token):
 		if self.debug:
 			print(f"Command1, condition: {token.cond}, Commands: {token.commands0, token.commands1}")
-		return token
+		return CommandIf(token.lineno, token.cond, token.commands0, commandElse=token.commands1)
 
 	@_("IF cond THEN commands ENDIF")
 	def command(self, token):
 		if self.debug:
 			print(f"Command2, condition: {token.cond}, Commands: {token.commands}")
-		return token
+		return CommandIf(token.lineno, token.cond, token.commands)
 
 	@_("WHILE cond DO commands ENDWHILE")
 	def command(self, token):
 		if self.debug:
 			print(f"Command3, condition: {token.cond}, Commands: {token.commands}")
-		return token
+		return CommandWhile(token.lineno, token.cond, token.commands)
 
 	@_("REPEAT commands UNTIL cond ';'")
 	def command(self, token):
@@ -95,25 +95,25 @@ class CompilerParser(Parser):
 	def command(self, token):
 		if self.debug:
 			print(f"Command3, iterator: {token.iter}, Values: {token.value0, token.value1}, Commands: {token.commands}")
-		return token
+		return CommandFor(token.lineno, token.iter, token.value0, token.value1, token.commands)
 
 	@_("FOR iter FROM value DOWNTO value DO commands ENDFOR")
 	def command(self, token):
 		if self.debug:
 			print(f"Command4, iterator: {token.iter}, Values: {token.value0, token.value1}, Commands: {token.commands}")
-		return token
+		return CommandFor(token.lineno, token.iter, token.value0, token.value1, token.commands, downTo=True)
 
 	@_("READ id ';'")
 	def command(self, token):
 		if self.debug:
 			print(f"Command5, read identifier: {token.id}")
-		return token
+		return CommandRead(token.lineno, token.id)
 
 	@_("WRITE value ';'")
 	def command(self, token):
 		if self.debug:
 			print(f"Command6, write value: {token.value}")
-		return token
+		return CommandWrite(token.lineno, token.value)
 
 	# Expression
 	@_("value")
