@@ -104,3 +104,68 @@ class CommandWrite:
 
 	def print(self):
 		print(f"CommandWrite: {self.lineno, self.value}")
+
+
+class ExpressionValue:
+	def __init__(self, lineno, value):
+		self.lineno = lineno
+		self.value = value
+		self.print()
+
+	def print(self):
+		print(f"ExpressionValue: {self.lineno, self.value}")
+
+
+class ExpressionAdd:
+	def __init__(self, lineno, value0, value1):
+		self.lineno = lineno
+		self.value0 = value0
+		self.value1 = value1
+		self.print()
+
+	def print(self):
+		print(f"ExpressionAdd: {self.lineno, self.value0, self.value1}")
+
+
+class ExpressionSub:
+	def __init__(self, lineno, value0, value1):
+		self.lineno = lineno
+		self.value0 = value0
+		self.value1 = value1
+		self.print()
+
+	def print(self):
+		print(f"ExpressionSub: {self.lineno, self.value0, self.value1}")
+
+
+class ExpressionMul:
+	def __init__(self, lineno, value0, value1):
+		self.lineno = lineno
+		self.value0 = value0
+		self.value1 = value1
+		self.print()
+
+	def print(self):
+		print(f"ExpressionMul: {self.lineno, self.value0, self.value1}")
+
+
+class ExpressionDiv:
+	def __init__(self, lineno, value0, value1):
+		self.lineno = lineno
+		self.value0 = value0
+		self.value1 = value1
+		self.print()
+
+	def print(self):
+		print(f"ExpressionDiv: {self.lineno, self.value0, self.value1}")
+
+
+class ExpressionMod:
+	def __init__(self, lineno, value0, value1):
+		self.lineno = lineno
+		self.value0 = value0
+		self.value1 = value1
+		self.print()
+
+	def print(self):
+		print(f"ExpressionDiv: {self.lineno, self.value0, self.value1}")

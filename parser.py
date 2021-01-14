@@ -120,37 +120,37 @@ class CompilerParser(Parser):
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression0, value: {token.value}")
-		return token
+		return ExpressionValue(token.lineno, token.value)
 
 	@_("value ADD value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression1, values: {token.value0, token.value1}")
-		return token
+		return ExpressionAdd(token.lineno, token.value0, token.value0)
 
 	@_("value SUB value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression2, values: {token.value0, token.value1}")
-		return token
+		return ExpressionSub(token.lineno, token.value0, token.value0)
 
 	@_("value MUL value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression3, values: {token.value0, token.value1}")
-		return token
+		return ExpressionMul(token.lineno, token.value0, token.value0)
 
 	@_("value DIV value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression4, values: {token.value0, token.value1}")
-		return token
+		return ExpressionDiv(token.lineno, token.value0, token.value0)
 
 	@_("value MOD value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression5, values: {token.value0, token.value1}")
-		return token
+		return ExpressionMod(token.lineno, token.value0, token.value0)
 
 	# Condition
 	@_("value EQ value")
