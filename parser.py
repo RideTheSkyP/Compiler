@@ -116,113 +116,113 @@ class CompilerParser(Parser):
 		return CommandWrite(token.lineno, token.value)
 
 	# Expression
-	@_("value")
-	def expr(self, token):
-		if self.debug:
-			print(f"Expression0, value: {token.value}")
-		return ExpressionValue(token.lineno, token.value)
-
 	@_("value ADD value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression1, values: {token.value0, token.value1}")
-		return ExpressionAdd(token.lineno, token.value0, token.value0)
+		return ExpressionAdd(token.lineno, token.value0, token.value1)
 
 	@_("value SUB value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression2, values: {token.value0, token.value1}")
-		return ExpressionSub(token.lineno, token.value0, token.value0)
+		return ExpressionSub(token.lineno, token.value0, token.value1)
 
 	@_("value MUL value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression3, values: {token.value0, token.value1}")
-		return ExpressionMul(token.lineno, token.value0, token.value0)
+		return ExpressionMul(token.lineno, token.value0, token.value1)
 
 	@_("value DIV value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression4, values: {token.value0, token.value1}")
-		return ExpressionDiv(token.lineno, token.value0, token.value0)
+		return ExpressionDiv(token.lineno, token.value0, token.value1)
 
 	@_("value MOD value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression5, values: {token.value0, token.value1}")
-		return ExpressionMod(token.lineno, token.value0, token.value0)
+		return ExpressionMod(token.lineno, token.value0, token.value1)
+
+	@_("value")
+	def expr(self, token):
+		if self.debug:
+			print(f"Expression0, value: {token.value}")
+		return ExpressionValue(token.value)
 
 	# Condition
 	@_("value EQ value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond0, values: {token.value0, token.value1}")
-		return token
+		return ConditionEq(token.lineno, token.value0, token.value1)
 
 	@_("value NEQ value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond1, values: {token.value0, token.value1}")
-		return token
+		return ConditionNeq(token.lineno, token.value0, token.value1)
 
 	@_("value LTE value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond2, values: {token.value0, token.value1}")
-		return token
+		return ConditionLte(token.lineno, token.value0, token.value1)
 
 	@_("value GTE value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond3, values: {token.value0, token.value1}")
-		return token
+		return ConditionGte(token.lineno, token.value0, token.value1)
 
 	@_("value LT value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond4, values: {token.value0, token.value1}")
-		return token
+		return ConditionLt(token.lineno, token.value0, token.value1)
 
 	@_("value GT value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond5, values: {token.value0, token.value1}")
-		return token
+		return ConditionGt(token.lineno, token.value0, token.value1)
 
 	# Value
 	@_("NUM")
 	def value(self, token):
 		if self.debug:
 			print(f"Value0, number: {token.NUM}")
-		return token
+		return "number", token.NUM
 
 	@_("id")
 	def value(self, token):
 		if self.debug:
 			print(f"Value1, identifier: {token.id}")
-		return token
+		return token.id
 
 	# Identifier
 	@_("ID")
 	def iter(self, token):
 		if self.debug:
 			print(f"Identifier0: {token.ID}")
-		return token
+		return token.ID
 
 	@_("ID")
 	def id(self, token):
 		if self.debug:
 			print(f"Identifier1, ID identifier: {token.ID}")
-		return token
+		return "id", token.ID
 
 	@_("ID '(' ID ')'")
 	def id(self, token):
 		if self.debug:
 			print(f"Identifier2, ID identifiers: {token.ID0, token.ID1}")
-		return token
+		return "array", token.ID0, ("id", token.ID1)
 
 	@_("ID '(' NUM ')'")
 	def id(self, token):
 		if self.debug:
 			print(f"Identifier3: {token.ID}, Number: {token.NUM}")
-		return token
+		return "array", token.ID, ("number", token.NUM)

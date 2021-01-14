@@ -1,13 +1,47 @@
-memory = 0
-variables = {}
-arrays = {}
+class Manager:
+	def __init__(self):
+		self.variables = {}
+		self.arrays = {}
+		self.memoryCounter = 0
+
+	def addVariable(self, identifier, lineno):
+		if identifier in self.variables:
+			raise Exception(f"Trying to initialize an existing variable: {identifier}. In line: {lineno}")
+		self.memoryCounter += 1
+		self.variables[identifier] = self.memoryCounter
+
+	def addArray(self, identifier, lineno, start, stop):
+		if stop < start:
+			raise Exception(f"Wrong array declaration: {identifier}. In line: {lineno}")
+		self.arrays[identifier] = (self.memoryCounter+1, start, stop)
+		self.memoryCounter += stop - start + 1
+
+	def deleteVariable(self, identifier, lineno):
+		if identifier not in self.variables:
+			raise Exception(f"Trying to delete non-existing variable: {identifier}. In line: {lineno}")
+		self.variables.pop(identifier)
+
+	def createTemporaryVariable(self):
+		pass
+
+	def getVariablePosition(self, identifier):
+		if identifier not in self.variables:
+			raise Exception(f"Trying to access non-existing variable: {identifier}")
+		else:
+			return self.variables[identifier]
+
+	def getArrayData(self, identifier):
+		if identifier not in self.arrays:
+			raise Exception(f"Trying to access non-existing array: {identifier}")
+		else:
+			return self.arrays[identifier]
 
 
 class Program:
 	def __init__(self, declarations=None, commands=None):
 		self.declarations = declarations
 		self.commands = commands
-		self.print()
+		# self.print()
 
 	def print(self):
 		print(self.declarations)
@@ -107,13 +141,12 @@ class CommandWrite:
 
 
 class ExpressionValue:
-	def __init__(self, lineno, value):
-		self.lineno = lineno
+	def __init__(self, value):
 		self.value = value
 		self.print()
 
 	def print(self):
-		print(f"ExpressionValue: {self.lineno, self.value}")
+		print(f"ExpressionValue: {self.value}")
 
 
 class ExpressionAdd:
@@ -168,4 +201,70 @@ class ExpressionMod:
 		self.print()
 
 	def print(self):
-		print(f"ExpressionDiv: {self.lineno, self.value0, self.value1}")
+		print(f"ExpressionMod: {self.lineno, self.value0, self.value1}")
+
+
+class ConditionEq:
+	def __init__(self, lineno, value0, value1):
+		self.lineno = lineno
+		self.value0 = value0
+		self.value1 = value1
+		self.print()
+
+	def print(self):
+		print(f"ConditionEq: {self.lineno, self.value0, self.value1}")
+
+
+class ConditionNeq:
+	def __init__(self, lineno, value0, value1):
+		self.lineno = lineno
+		self.value0 = value0
+		self.value1 = value1
+		self.print()
+
+	def print(self):
+		print(f"ConditionNeq: {self.lineno, self.value0, self.value1}")
+
+
+class ConditionLte:
+	def __init__(self, lineno, value0, value1):
+		self.lineno = lineno
+		self.value0 = value0
+		self.value1 = value1
+		self.print()
+
+	def print(self):
+		print(f"ConditionLte: {self.lineno, self.value0, self.value1}")
+
+
+class ConditionGte:
+	def __init__(self, lineno, value0, value1):
+		self.lineno = lineno
+		self.value0 = value0
+		self.value1 = value1
+		self.print()
+
+	def print(self):
+		print(f"ConditionGte: {self.lineno, self.value0, self.value1}")
+
+
+class ConditionLt:
+	def __init__(self, lineno, value0, value1):
+		self.lineno = lineno
+		self.value0 = value0
+		self.value1 = value1
+		self.print()
+
+	def print(self):
+		print(f"ConditionLt: {self.lineno, self.value0, self.value1}")
+
+
+class ConditionGt:
+	def __init__(self, lineno, value0, value1):
+		self.lineno = lineno
+		self.value0 = value0
+		self.value1 = value1
+		self.print()
+
+	def print(self):
+		print(f"ConditionGt: {self.lineno, self.value0, self.value1}")
