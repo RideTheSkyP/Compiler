@@ -3,18 +3,13 @@ class Manager:
 		self.variables = {}
 		self.arrays = {}
 		self.memoryCounter = 0
+		self.exceptions = Exceptions()
 
 	def addVariable(self, identifier, lineno):
 		if identifier in self.variables:
 			raise Exception(f"Trying to initialize an existing variable: {identifier}. In line: {lineno}")
 		self.memoryCounter += 1
 		self.variables[identifier] = self.memoryCounter
-
-	def addArray(self, identifier, lineno, start, stop):
-		if stop < start:
-			raise Exception(f"Wrong array declaration: {identifier}. In line: {lineno}")
-		self.arrays[identifier] = (self.memoryCounter+1, start, stop)
-		self.memoryCounter += stop - start + 1
 
 	def deleteVariable(self, identifier, lineno):
 		if identifier not in self.variables:
@@ -30,18 +25,52 @@ class Manager:
 		else:
 			return self.variables[identifier]
 
+	def addArray(self, identifier, lineno, start, stop):
+		if stop < start:
+			raise Exception(f"Wrong array declaration: {identifier}. In line: {lineno}")
+		self.arrays[identifier] = (self.memoryCounter + 1, start, stop)
+		self.memoryCounter += stop - start + 1
+
 	def getArrayData(self, identifier):
 		if identifier not in self.arrays:
 			raise Exception(f"Trying to access non-existing array: {identifier}")
 		else:
 			return self.arrays[identifier]
 
+	def loadDataMemoryAddress(self, data, lineno):
+		if data[0] == "id":
+			self.exceptions.checkVariable(data[1], lineno)
+			# return
+		elif data[0] == "array":
+			self.exceptions.checkArray(data[1], lineno)
+			# return
+
+
+class Exceptions(Manager):
+	def __init__(self):
+		super().__init__()
+
+	def checkVariable(self, identifier, lineno):
+		if identifier not in self.variables:
+			if identifier not in self.arrays:
+				raise Exception(f"Error. Variable {identifier} isn't initialized. Line: {lineno}")
+			else:
+				raise Exception(f"Error. Variable {identifier} initialized like an array. Line: {lineno}")
+
+	def checkArray(self, identifier, lineno):
+		if identifier not in self.arrays:
+			if identifier not in self.variables:
+				raise Exception(f"Error. Array {identifier} isn't initialized. Line: {lineno}")
+			else:
+				raise Exception(f"Error. Array {identifier} initialized like a variable. Line: {lineno}")
+
 
 class Program:
 	def __init__(self, declarations=None, commands=None):
 		self.declarations = declarations
 		self.commands = commands
-		# self.print()
+
+	# self.print()
 
 	def print(self):
 		print(self.declarations)
