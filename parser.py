@@ -2,19 +2,22 @@ from sly import Parser
 from lexer import CompilerLexer
 from ast import *
 
+memoryWrite = ""
+
 
 class CompilerParser(Parser):
 	tokens = CompilerLexer.tokens
 
 	def __init__(self):
-		self.debug = False
+		self.debug = True
 
 	# Program
 	@_("DECLARE declarations BEGIN commands END")
 	def program(self, token):
 		if self.debug:
 			print(f"Program0: {token.declarations}, Instructions: {token.commands}")
-		return Program(token.declarations, token.commands)
+		# print(manager.variablesMemoryStore)
+		return token.commands
 
 	@_("BEGIN commands END")
 	def program(self, token):
@@ -25,47 +28,51 @@ class CompilerParser(Parser):
 	# Declarations
 	@_("declarations ',' ID")
 	def declarations(self, token):
+		global memoryWrite
 		if self.debug:
-			print(f"Declarations0, ID: {token.ID}")
-		return Declarations(token.ID, token.lineno)
+			print(f"Declarations0, ID: {token.ID}. Lineno: {token.lineno}")
+		manager.addVariable(token.ID, token.lineno)
 
 	@_("declarations ',' ID '(' NUM ':' NUM ')'")
 	def declarations(self, token):
 		if self.debug:
 			print(f"Declarations1, ID & array: {token.ID, token.NUM0, token.NUM1}")
-		return Declarations(token.ID, token.lineno, token.NUM0, token.NUM1)
+		manager.addArray(token.ID, token.lineno, token.NUM0, token.NUM1)
 
 	@_("ID")
 	def declarations(self, token):
 		if self.debug:
-			print(f"Declarations2, ID: {token.ID}")
-		return Declarations(token.ID, token.lineno)
+			print(f"Declarations2, ID: {token.ID}. Lineno: {token.lineno}")
+		manager.addVariable(token.ID, token.lineno)
 
 	@_("ID '(' NUM ':' NUM ')'")
 	def declarations(self, token):
 		if self.debug:
 			print(f"Declarations3, ID & array: {token.ID, token.NUM0, token.NUM1}")
-		return Declarations(token.ID, token.lineno, token.NUM0, token.NUM1)
+		manager.addArray(token.ID, token.lineno, token.NUM0, token.NUM1)
 
 	# Commands
 	@_("commands command")
 	def commands(self, token):
 		if self.debug:
 			print(f"Commands0: {token.commands}, Command:{token.command}")
-		return token
+		token.commands.append(token.command)
+		return token.commands
 
 	@_("command")
 	def commands(self, token):
 		if self.debug:
 			print(f"Commands1, command: {token.command}")
-		return token
+		return [token.command]
 
 	# Command
 	@_("id ASSIGN expr ';'")
 	def command(self, token):
 		if self.debug:
 			print(f"Command0, ID: {token.id}, Expression: {token.expr}")
-		return CommandAssign(token.lineno, token.id, token.expr)
+		manager.initializedIdentifiers[token.id[1]] = True
+		return f"{token.expr}{manager.writeVariable(manager.getVariableAddress(token.id[1]), 'b')}STORE c b\n"
+		# return token.expr
 
 	@_("IF cond THEN commands ELSE commands ENDIF")
 	def command(self, token):
@@ -107,50 +114,53 @@ class CompilerParser(Parser):
 	def command(self, token):
 		if self.debug:
 			print(f"Command5, read identifier: {token.id}")
-		return CommandRead(token.lineno, token.id)
+		manager.initializedIdentifiers[token.id[1]] = True
+		return f"{manager.loadVariable(token.id, 'a', token.lineno)}GET a\n"
 
 	@_("WRITE value ';'")
 	def command(self, token):
 		if self.debug:
 			print(f"Command6, write value: {token.value}")
-		return CommandWrite(token.lineno, token.value)
+		print("WR", token.value)
+		return f"{manager.writeVariable(manager.getVariableAddress(token.value[1]), 'd')}PUT d\n"
 
 	# Expression
 	@_("value ADD value")
 	def expr(self, token):
 		if self.debug:
-			print(f"Expression1, values: {token.value0, token.value1}")
-		return ExpressionAdd(token.lineno, token.value0, token.value1)
+			print(f"Expression0, values: {token.value0, token.value1}")
+		return f"{manager.loadVariable(token.value0, 'c', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}ADD c b\n"
 
 	@_("value SUB value")
 	def expr(self, token):
 		if self.debug:
-			print(f"Expression2, values: {token.value0, token.value1}")
-		return ExpressionSub(token.lineno, token.value0, token.value1)
+			print(f"Expression1, values: {token.value0, token.value1}")
+		return f"{manager.loadVariable(token.value0, 'c', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}SUB c b\n"
 
 	@_("value MUL value")
 	def expr(self, token):
 		if self.debug:
-			print(f"Expression3, values: {token.value0, token.value1}")
+			print(f"Expression2, values: {token.value0, token.value1}")
 		return ExpressionMul(token.lineno, token.value0, token.value1)
 
 	@_("value DIV value")
 	def expr(self, token):
 		if self.debug:
-			print(f"Expression4, values: {token.value0, token.value1}")
+			print(f"Expression3, values: {token.value0, token.value1}")
 		return ExpressionDiv(token.lineno, token.value0, token.value1)
 
 	@_("value MOD value")
 	def expr(self, token):
 		if self.debug:
-			print(f"Expression5, values: {token.value0, token.value1}")
+			print(f"Expression4, values: {token.value0, token.value1}")
 		return ExpressionMod(token.lineno, token.value0, token.value1)
 
 	@_("value")
 	def expr(self, token):
 		if self.debug:
-			print(f"Expression0, value: {token.value}")
-		return ExpressionValue(token.value)
+			print(f"Expression5, value: {token.value}")
+		return f"{manager.loadVariable(token.value, 'c', token.value[2])}"
+		# return token.value
 
 	# Condition
 	@_("value EQ value")
@@ -194,7 +204,8 @@ class CompilerParser(Parser):
 	def value(self, token):
 		if self.debug:
 			print(f"Value0, number: {token.NUM}")
-		return "number", token.NUM
+		manager.addVariable(token.NUM, token.lineno)
+		return "number", token.NUM, token.lineno
 
 	@_("id")
 	def value(self, token):
@@ -207,6 +218,8 @@ class CompilerParser(Parser):
 	def iter(self, token):
 		if self.debug:
 			print(f"Identifier0: {token.ID}")
+		manager.addVariable(token.ID, token.lineno)
+		manager.initializedIdentifiers[token.ID] = True
 		return token.ID
 
 	@_("ID")

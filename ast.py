@@ -1,25 +1,34 @@
 class Manager:
 	def __init__(self):
+		self.filename = "1.txt"
 		self.variables = {}
 		self.arrays = {}
-		self.memoryCounter = 0
-		self.exceptions = Exceptions()
+		self.initializedIdentifiers = {}
+		self.variablesMemoryStore = ""
+		self.memoryCounter = -1
 
 	def addVariable(self, identifier, lineno):
-		if identifier in self.variables:
+		print(identifier, lineno)
+		reg = "a"
+		if identifier not in self.variables:
+			self.memoryCounter += 1
+			self.variables[identifier] = self.memoryCounter
+			if type(identifier) == int:
+				self.variablesMemoryStore += f"{self.writeVariable(identifier, 'b')}"
+				reg = "b"
+			self.variablesMemoryStore += f"{self.writeVariable(self.variables[identifier], 'a')}STORE {reg} a\n"
+		elif type(identifier) == int:
+			pass
+		else:
 			raise Exception(f"Trying to initialize an existing variable: {identifier}. In line: {lineno}")
-		self.memoryCounter += 1
-		self.variables[identifier] = self.memoryCounter
 
 	def deleteVariable(self, identifier, lineno):
 		if identifier not in self.variables:
 			raise Exception(f"Trying to delete non-existing variable: {identifier}. In line: {lineno}")
 		self.variables.pop(identifier)
 
-	def createTemporaryVariable(self):
-		pass
-
-	def getVariablePosition(self, identifier):
+	def getVariableAddress(self, identifier):
+		# print("gVA: ", self.variables, identifier)
 		if identifier not in self.variables:
 			raise Exception(f"Trying to access non-existing variable: {identifier}")
 		else:
@@ -37,18 +46,39 @@ class Manager:
 		else:
 			return self.arrays[identifier]
 
-	def loadDataMemoryAddress(self, data, lineno):
+	def loadVariable(self, variable, register, lineno):
+		print("LV", variable, self.variables)
+		addVar = ""
+		if variable[0] == "number":
+			if variable[1] not in self.variables:
+				print("add")
+				addVar += self.addVariable(variable[1], lineno)
+			return addVar + f"{self.writeVariable(self.variables[variable[1]], 'a')}LOAD {register} a\n"
+		elif variable[0] == "id":
+			self.checkVariableInitialization(variable[1], lineno)
+		return self.loadDataMemoryAddress(variable, register, lineno)
+
+	def loadDataMemoryAddress(self, data, register, lineno):
 		if data[0] == "id":
-			self.exceptions.checkVariable(data[1], lineno)
-			# return
+			self.checkVariable(data[1], lineno)
+			# self.writeVariable(data[1], "b")
+			return f"{self.writeVariable(self.variables[data[1]], 'a')}LOAD {register} a\n"
 		elif data[0] == "array":
-			self.exceptions.checkArray(data[1], lineno)
+			self.checkArray(data[1], lineno)
 			# return
 
-
-class Exceptions(Manager):
-	def __init__(self):
-		super().__init__()
+	def writeVariable(self, number, register):
+		print(number)
+		string, array = "", []
+		while number != 0:
+			if number % 2 == 0:
+				number //= 2
+				array.append(f"SHL {register}\n")
+			else:
+				number -= 1
+				array.append(f"INC {register}\n")
+		string = string.join([i for i in reversed(array)])
+		return f"RESET {register}\n" + string
 
 	def checkVariable(self, identifier, lineno):
 		if identifier not in self.variables:
@@ -64,29 +94,38 @@ class Exceptions(Manager):
 			else:
 				raise Exception(f"Error. Array {identifier} initialized like a variable. Line: {lineno}")
 
+	def checkVariableInitialization(self, identifier, lineno):
+		if identifier not in self.initializedIdentifiers:
+			raise Exception("Błąd w linii " + lineno + ': użycie niezainicjowanej zmiennej ' + identifier)
+
+
+manager = Manager()
+
 
 class Program:
 	def __init__(self, declarations=None, commands=None):
 		self.declarations = declarations
 		self.commands = commands
-
-	# self.print()
+		self.print()
 
 	def print(self):
 		print(self.declarations)
 		print(self.commands)
 
 
-class Declarations:
-	def __init__(self, identifier, lineno, start=None, stop=None):
-		self.identifier = identifier
-		self.lineno = lineno
-		self.start = start
-		self.stop = stop
-		self.print()
-
-	def print(self):
-		print(self.lineno, self.identifier, self.start, self.stop)
+# class Declarations:
+# 	def __init__(self, identifier, lineno, start=None, stop=None):
+# 		self.identifier = identifier
+# 		self.lineno = lineno
+# 		self.start = start
+# 		self.stop = stop
+#
+# 	def print(self):
+# 		print(self.lineno, self.identifier, self.start, self.stop)
+# 		if (self.start is None) and (self.stop is None):
+# 			return manager.addVariable(self.identifier, self.lineno)
+# 		else:
+# 			return manager.addArray(self.identifier, self.lineno, self.start, self.stop)
 
 
 class CommandAssign:
@@ -98,7 +137,9 @@ class CommandAssign:
 		self.print()
 
 	def print(self):
+		manager.initializedIdentifiers[self.identifier[1]] = True
 		print(f"CommandAssign: {self.lineno, self.identifier, self.expr, self.cond}")
+		# return self.expr
 
 
 class CommandIf:
@@ -149,14 +190,18 @@ class CommandFor:
 		print(f"CommandFor: {self.lineno, self.iterator, self.valueFrom, self.valueTo, self.commands, self.downTo}")
 
 
-class CommandRead:
-	def __init__(self, lineno, identifier):
-		self.lineno = lineno
-		self.identifier = identifier
-		self.print()
-
-	def print(self):
-		print(f"CommandRead: {self.lineno, self.identifier}")
+# class CommandRead:
+# 	def __init__(self, lineno, identifier):
+# 		self.lineno = lineno
+# 		self.identifier = identifier
+# 		self.print()
+#
+# 	def print(self):
+# 		print(self.identifier)
+# 		manager.initializedIdentifiers[self.identifier[1]] = True
+# 		print(f"CommandRead: {self.lineno, self.identifier}")
+# 		# print(f"{manager.loadVariable(self.identifier, 'a', self.lineno)}GET a\n")
+# 		return f"{manager.loadVariable(self.identifier, 'a', self.lineno)}GET a\n"
 
 
 class CommandWrite:
@@ -167,15 +212,19 @@ class CommandWrite:
 
 	def print(self):
 		print(f"CommandWrite: {self.lineno, self.value}")
+		print(self.value)
+		# print(f"{manager.loadVariable(self.value, 'a', self.lineno)}STORE a a\nPUT a\n")
 
 
 class ExpressionValue:
 	def __init__(self, value):
-		self.value = value
+		self.value = value[:2]
+		self.lineno = value[2]
 		self.print()
 
 	def print(self):
-		print(f"ExpressionValue: {self.value}")
+		print(f"ExpressionValue: {self.value, self.lineno}")
+		manager.loadVariable(self.value, "a", self.lineno)
 
 
 class ExpressionAdd:
@@ -220,6 +269,8 @@ class ExpressionDiv:
 
 	def print(self):
 		print(f"ExpressionDiv: {self.lineno, self.value0, self.value1}")
+		# print(f"{manager.loadVariable(self.value0, 'a', self.lineno)}{manager.loadVariable(self.value1, 'b', self.lineno)}{'SHR b' if self.value1[1]==2 else 'TBC'}\n")
+		print(manager.loadVariable(self.value0, 'a', self.lineno), manager.loadVariable(self.value1, 'b', self.lineno))
 
 
 class ExpressionMod:
@@ -297,3 +348,4 @@ class ConditionGt:
 
 	def print(self):
 		print(f"ConditionGt: {self.lineno, self.value0, self.value1}")
+		print(f"{manager.loadVariable(self.value0, 'a', self.lineno)}{manager.loadVariable(self.value1, 'b', self.lineno)}SUB a b\nJZERO a ?\n")
