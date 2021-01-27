@@ -8,7 +8,7 @@ class Manager:
 		self.memoryCounter = -1
 
 	def addVariable(self, identifier, lineno):
-		print(identifier, lineno)
+		# print(identifier, lineno)
 		reg = "a"
 		if identifier not in self.variables:
 			self.memoryCounter += 1
@@ -17,6 +17,7 @@ class Manager:
 				self.variablesMemoryStore += f"{self.writeVariable(identifier, 'b')}"
 				reg = "b"
 			self.variablesMemoryStore += f"{self.writeVariable(self.variables[identifier], 'a')}STORE {reg} a\n"
+			# print("AddVar: ", self.variablesMemoryStore, self.variables)
 		elif type(identifier) == int:
 			pass
 		else:
@@ -48,12 +49,10 @@ class Manager:
 
 	def loadVariable(self, variable, register, lineno):
 		print("LV", variable, self.variables)
-		addVar = ""
 		if variable[0] == "number":
 			if variable[1] not in self.variables:
-				print("add")
-				addVar += self.addVariable(variable[1], lineno)
-			return addVar + f"{self.writeVariable(self.variables[variable[1]], 'a')}LOAD {register} a\n"
+				self.addVariable(variable[1], lineno)
+			return f"{self.writeVariable(self.variables[variable[1]], 'a')}LOAD {register} a\n"
 		elif variable[0] == "id":
 			self.checkVariableInitialization(variable[1], lineno)
 		return self.loadDataMemoryAddress(variable, register, lineno)

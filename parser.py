@@ -141,7 +141,7 @@ class CompilerParser(Parser):
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression2, values: {token.value0, token.value1}")
-		return ExpressionMul(token.lineno, token.value0, token.value1)
+		return f"{manager.loadVariable(token.value0, 'c', token.lineno)}{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}{manager.loadVariable(('number', 1, token.lineno), 'f', token.lineno)}SUB b f\nJZERO b 4\nADD c e\nSUB b f\nJUMP -3\n"
 
 	@_("value DIV value")
 	def expr(self, token):

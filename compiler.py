@@ -1,20 +1,17 @@
 from lexer import CompilerLexer
 from parser import CompilerParser
-
+from ast import *
 
 if __name__ == "__main__":
 	lexer = CompilerLexer()
 	parser = CompilerParser()
-	# text = ""
-	with open("testy2020/program1.imp") as text:
+	with open("testy2020/mul.imp") as text:
 		tokens = lexer.tokenize(text.read())
-		# print([tok for tok in tokens])
-		parser.parse(tokens)
+		parsed = parser.parse(tokens)
+		writeToFile = f"{manager.variablesMemoryStore}{''.join(parsed)}HALT"
+		print(writeToFile)
+		with open("1.txt", "w") as fw:
+			fw.write(writeToFile)
+			print("Saved to 1.txt successfully")
 
-	# while True:
-	# 	try:
-	# 		text = input("")
-	# 	except EOFError:
-	# 		print("Error")
-	# 	if text:
-	# 		parser.parse(lexer.tokenize(text))
+	print("Comp: ", parsed)
