@@ -1,7 +1,7 @@
 DECLARE
 	n, j
 BEGIN
-	n := 51;
-	j := n % 2;
+	n := 21;
+	j := n % 10;
 	WRITE j;
 END

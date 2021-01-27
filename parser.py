@@ -141,19 +141,19 @@ class CompilerParser(Parser):
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression2, values: {token.value0, token.value1}")
-		return f"{manager.loadVariable(token.value0, 'c', token.lineno)}{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}{manager.loadVariable(('number', 1, token.lineno), 'f', token.lineno)}SUB b f\nJZERO b 3\nADD c e\nJUMP -3\n"
+		return f"{manager.loadVariable(token.value0, 'c', token.lineno)}{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}DEC b\nJZERO b 3\nADD c e\nJUMP -3\n"
 
 	@_("value DIV value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression3, values: {token.value0, token.value1}")
-		return f"{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}{manager.loadVariable(('number', 0, token.lineno), 'c', token.lineno)}{manager.loadVariable(('number', 1, token.lineno), 'f', token.lineno)}JZERO e 4\nSUB e b\nADD c f\nJUMP -3\n"
+		return f"{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}RESET c\n{manager.loadVariable(token.value1, 'f', token.lineno)}JZERO e 7\nSUB f e\nJZERO f 2\nJUMP 2\nINC c\nSUB e b\nJUMP -7\n"
 
 	@_("value MOD value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression4, values: {token.value0, token.value1}")
-		return f"{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}JZERO e 5\nRESET c\nADD c e\nSUB e b\nJUMP -4\n"
+		return f"{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}{manager.loadVariable(token.value1, 'f', token.lineno)}RESET c\nJZERO e 7\nSUB f e\nJZERO f 3\nADD c e\nJUMP 3\nSUB e b\nJUMP -8\n"
 
 	@_("value")
 	def expr(self, token):

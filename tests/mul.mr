@@ -51,9 +51,8 @@ SHL a
 SHL a
 LOAD f a
 SUB b f
-JZERO b 4
+JZERO b 3
 ADD c e
-SUB b f
 JUMP -3
 RESET b
 INC b
