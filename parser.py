@@ -160,8 +160,7 @@ class CompilerParser(Parser):
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression5, value: {token.value}")
-		return f"{manager.loadVariable(token.value, 'c', token.value[2])}"
-		# return token.value
+		return f"{manager.loadVariable(token.value, 'c', None)}"
 
 	# Condition
 	@_("value EQ value")

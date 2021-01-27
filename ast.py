@@ -52,7 +52,6 @@ class Manager:
 		self.arrays[identifier] = (self.memoryCounter + 1, start, stop)
 		print("Kek", self.memoryCounter)
 		self.memoryCounter += stop - start + 1
-		print(f"Keku: {self.memoryCounter, identifier, lineno, start, stop}, {self.arrays}, {self.variables}")
 
 	def getArrayData(self, identifier):
 		if identifier not in self.arrays:
@@ -77,7 +76,8 @@ class Manager:
 			return f"{self.writeVariable(self.variables[data[1]], 'a')}LOAD {register} a\n"
 		elif data[0] == "array":
 			self.checkArray(data[1], lineno)
-			# return
+			print("LDMA: ", self.arrays[data[1]][0], data[2][1])
+			return f"{self.writeVariable(self.arrays[data[1]][0]+data[2][1], 'a')}LOAD {register} a\n"
 
 	def writeVariable(self, number, register):
 		print(number)

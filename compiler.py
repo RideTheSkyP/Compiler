@@ -5,7 +5,7 @@ from ast import *
 if __name__ == "__main__":
 	lexer = CompilerLexer()
 	parser = CompilerParser()
-	with open("testy2020/mul.imp") as text:
+	with open("testy2020/2-fib.imp") as text:
 		tokens = lexer.tokenize(text.read())
 		parsed = parser.parse(tokens)
 		writeToFile = f"{manager.variablesMemoryStore}{''.join(parsed)}HALT"
