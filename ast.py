@@ -29,17 +29,30 @@ class Manager:
 		self.variables.pop(identifier)
 
 	def getVariableAddress(self, identifier):
-		# print("gVA: ", self.variables, identifier)
-		if identifier not in self.variables:
-			raise Exception(f"Trying to access non-existing variable: {identifier}")
-		else:
-			return self.variables[identifier]
+		print("gVA: ", self.variables, identifier)
+		try:
+			position = identifier[2][1]
+			if identifier[1] in self.arrays:
+				if (position < self.arrays[identifier[1]][1]) or (position > self.arrays[identifier[1]][2]):
+					raise Exception(f"Trying to access variable: {position}, which is not in array: {identifier[1]}")
+				else:
+					return self.arrays[identifier[1]][0] + position
+			else:
+				raise Exception(f"Trying to access non-existing array: {identifier[1]}")
+		except:
+			if identifier[1] not in self.variables:
+				raise Exception(f"Trying to access non-existing variable: {identifier[1]}")
+			else:
+				return self.variables[identifier[1]]
 
 	def addArray(self, identifier, lineno, start, stop):
+		# print(f"AddArray: {identifier, lineno, start, stop}")
 		if stop < start:
 			raise Exception(f"Wrong array declaration: {identifier}. In line: {lineno}")
 		self.arrays[identifier] = (self.memoryCounter + 1, start, stop)
+		print("Kek", self.memoryCounter)
 		self.memoryCounter += stop - start + 1
+		print(f"Keku: {self.memoryCounter, identifier, lineno, start, stop}, {self.arrays}, {self.variables}")
 
 	def getArrayData(self, identifier):
 		if identifier not in self.arrays:
@@ -95,7 +108,7 @@ class Manager:
 
 	def checkVariableInitialization(self, identifier, lineno):
 		if identifier not in self.initializedIdentifiers:
-			raise Exception("Błąd w linii " + lineno + ': użycie niezainicjowanej zmiennej ' + identifier)
+			raise Exception(f"Error. Variable {identifier} isn't initialized. Line: {lineno}")
 
 
 manager = Manager()

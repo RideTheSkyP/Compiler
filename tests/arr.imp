@@ -1,0 +1,7 @@
+DECLARE
+    n, j, arr(2:100)
+BEGIN
+    [n := 100;]
+    arr(20) := 1;
+    WRITE arr(20);
+END

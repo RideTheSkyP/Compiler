@@ -71,7 +71,8 @@ class CompilerParser(Parser):
 		if self.debug:
 			print(f"Command0, ID: {token.id}, Expression: {token.expr}")
 		manager.initializedIdentifiers[token.id[1]] = True
-		return f"{token.expr}{manager.writeVariable(manager.getVariableAddress(token.id[1]), 'b')}STORE c b\n"
+		print(token.expr, "tokenID", token.id)
+		return f"{token.expr}{manager.writeVariable(manager.getVariableAddress(token.id), 'b')}STORE c b\n"
 		# return token.expr
 
 	@_("IF cond THEN commands ELSE commands ENDIF")
@@ -122,7 +123,7 @@ class CompilerParser(Parser):
 		if self.debug:
 			print(f"Command6, write value: {token.value}")
 		print("WR", token.value)
-		return f"{manager.writeVariable(manager.getVariableAddress(token.value[1]), 'd')}PUT d\n"
+		return f"{manager.writeVariable(manager.getVariableAddress(token.value), 'd')}PUT d\n"
 
 	# Expression
 	@_("value ADD value")
