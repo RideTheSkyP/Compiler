@@ -153,7 +153,7 @@ class CompilerParser(Parser):
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression4, values: {token.value0, token.value1}")
-		return ExpressionMod(token.lineno, token.value0, token.value1)
+		return f"{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}JZERO e 5\nRESET c\nADD c e\nSUB e b\nJUMP -4\n"
 
 	@_("value")
 	def expr(self, token):

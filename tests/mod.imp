@@ -1,0 +1,7 @@
+DECLARE
+	n, j
+BEGIN
+	n := 51;
+	j := n % 2;
+	WRITE j;
+END
