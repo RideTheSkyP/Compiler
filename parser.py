@@ -73,7 +73,6 @@ class CompilerParser(Parser):
 		manager.initializedIdentifiers[token.id[1]] = True
 		print(token.expr, "tokenID", token.id)
 		return f"{token.expr}{manager.writeVariable(manager.getVariableAddress(token.id), 'b')}STORE c b\n"
-		# return token.expr
 
 	@_("IF cond THEN commands ELSE commands ENDIF")
 	def command(self, token):
@@ -148,13 +147,13 @@ class CompilerParser(Parser):
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression3, values: {token.value0, token.value1}")
-		return f"{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}RESET c\n{manager.loadVariable(token.value1, 'f', token.lineno)}JZERO e 7\nSUB f e\nJZERO f 2\nJUMP 2\nINC c\nSUB e b\nJUMP -7\n"
+		return f"{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}RESET c\n{manager.loadVariable(token.value1, 'f', token.lineno)}JZERO f 8\nJZERO e 7\nSUB f e\nJZERO f 2\nJUMP 2\nINC c\nSUB e b\nJUMP -8\n"
 
 	@_("value MOD value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression4, values: {token.value0, token.value1}")
-		return f"{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}{manager.loadVariable(token.value1, 'f', token.lineno)}RESET c\nJZERO e 7\nSUB f e\nJZERO f 3\nADD c e\nJUMP 3\nSUB e b\nJUMP -8\n"
+		return f"{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'b', token.lineno)}{manager.loadVariable(token.value1, 'f', token.lineno)}JZERO f 9\nRESET c\nJZERO e 7\nSUB f e\nJZERO f 3\nADD c e\nJUMP 3\nSUB e b\nJUMP -8\n"
 
 	@_("value")
 	def expr(self, token):
@@ -238,4 +237,5 @@ class CompilerParser(Parser):
 	def id(self, token):
 		if self.debug:
 			print(f"Identifier3: {token.ID}, Number: {token.NUM}")
+		manager.addVariableToArray(token.ID, token.NUM, token.lineno)
 		return "array", token.ID, ("number", token.NUM)

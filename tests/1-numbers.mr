@@ -340,6 +340,10 @@ SHL a
 SHL a
 SHL a
 STORE b a
+RESET a
+INC a
+SHL a
+STORE a a
 RESET b
 INC b
 SHL b
@@ -422,6 +426,11 @@ SHL a
 INC a
 SHL a
 STORE b a
+RESET a
+INC a
+SHL a
+SHL a
+STORE a a
 RESET b
 INC b
 SHL b
@@ -439,6 +448,8 @@ INC a
 SHL a
 INC a
 STORE b a
+RESET a
+STORE a a
 RESET b
 INC b
 SHL b
@@ -522,6 +533,8 @@ SHL a
 SHL a
 INC a
 STORE b a
+RESET a
+STORE a a
 RESET b
 INC b
 SHL b
@@ -598,6 +611,70 @@ SHL a
 SHL a
 SHL a
 STORE b a
+RESET a
+INC a
+SHL a
+INC a
+STORE a a
+RESET a
+STORE a a
+RESET a
+INC a
+SHL a
+SHL a
+INC a
+STORE a a
+RESET a
+INC a
+SHL a
+SHL a
+INC a
+STORE a a
+RESET a
+STORE a a
+RESET a
+INC a
+SHL a
+SHL a
+STORE a a
+RESET a
+INC a
+SHL a
+SHL a
+INC a
+STORE a a
+RESET a
+STORE a a
+RESET a
+INC a
+SHL a
+INC a
+STORE a a
+RESET a
+INC a
+SHL a
+STORE a a
+RESET a
+INC a
+SHL a
+SHL a
+INC a
+STORE a a
+RESET a
+STORE a a
+RESET a
+INC a
+SHL a
+SHL a
+STORE a a
+RESET a
+INC a
+SHL a
+SHL a
+INC a
+STORE a a
+RESET a
+STORE a a
 RESET d
 INC d
 SHL d
@@ -885,13 +962,14 @@ SHL a
 SHL a
 INC a
 LOAD f a
+JZERO f 8
 JZERO e 7
 SUB f e
 JZERO f 2
 JUMP 2
 INC c
 SUB e b
-JUMP -7
+JUMP -8
 RESET b
 INC b
 SHL b
