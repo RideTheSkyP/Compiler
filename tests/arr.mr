@@ -38,6 +38,20 @@ SHL b
 INC b
 SHL b
 STORE c b
+RESET a
+INC a
+SHL a
+SHL a
+INC a
+SHL a
+INC a
+SHL a
+LOAD c a
+RESET b
+INC b
+SHL b
+SHL b
+STORE c b
 RESET d
 INC d
 SHL d
@@ -45,6 +59,11 @@ SHL d
 INC d
 SHL d
 INC d
+SHL d
+PUT d
+RESET d
+INC d
+SHL d
 SHL d
 PUT d
 HALT

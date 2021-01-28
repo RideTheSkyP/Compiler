@@ -1,5 +1,5 @@
 BEGIN
-	IF 1<5 THEN
+	IF 5!=5 THEN
 		WRITE 1;
 	ELSE
 		WRITE 0;

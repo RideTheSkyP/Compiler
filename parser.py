@@ -90,7 +90,7 @@ class CompilerParser(Parser):
 	def command(self, token):
 		if self.debug:
 			print(f"Command3, condition: {token.cond}, Commands: {token.commands}")
-		return CommandWhile(token.lineno, token.cond, token.commands)
+		return f"{token.cond}{manager.lengthOfCommands(token.commands)}\n{''.join(token.commands)}JUMP -{manager.lengthOfCommands(token.commands)+manager.lengthOfCommands(token.cond)}\n"
 
 	@_("REPEAT commands UNTIL cond ';'")
 	def command(self, token):
@@ -166,25 +166,25 @@ class CompilerParser(Parser):
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond0, values: {token.value0, token.value1}")
-		return ConditionEq(token.lineno, token.value0, token.value1)
+		return f"{manager.loadVariable(token.value0, 'b', token.lineno)}{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'f', token.lineno)}SUB b f\nJZERO b 2\nJUMP 3\nSUB f e\nJZERO f 2\nJUMP "
 
 	@_("value NEQ value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond1, values: {token.value0, token.value1}")
-		return ConditionNeq(token.lineno, token.value0, token.value1)
+		return f"{manager.loadVariable(token.value0, 'b', token.lineno)}{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'f', token.lineno)}SUB b f\nJZERO b 2\nJUMP 3\nSUB f e\nJZERO f "
 
 	@_("value LTE value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond2, values: {token.value0, token.value1}")
-		return ConditionLte(token.lineno, token.value0, token.value1)
+		return f"{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'f', token.lineno)}SUB e f\nJZERO e 2\nJUMP "
 
 	@_("value GTE value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond3, values: {token.value0, token.value1}")
-		return ConditionGte(token.lineno, token.value0, token.value1)
+		return f"{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'f', token.lineno)}SUB f e\nJZERO f 2\nJUMP "
 
 	@_("value LT value")
 	def cond(self, token):

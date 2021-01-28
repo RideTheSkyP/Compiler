@@ -123,7 +123,12 @@ class Manager:
 			raise Exception(f"Error. Variable {identifier} isn't initialized. Line: {lineno}")
 
 	def lengthOfCommands(self, array):
-		loc = sum([len(i.split("\n")) for i in array])
+		print(array, type(array))
+		if type(array) == list:
+			loc = sum([len(i.split("\n")) for i in array])
+		else:
+			loc = len(array.split("\n"))
+			print("ARKA: ", array)
 		print("LOC", loc)
 		return loc
 
