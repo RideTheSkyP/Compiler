@@ -1,0 +1,34 @@
+RESET b
+INC b
+RESET a
+STORE b a
+RESET b
+INC b
+SHL b
+SHL b
+INC b
+RESET a
+INC a
+STORE b a
+RESET b
+RESET a
+INC a
+SHL a
+STORE b a
+RESET a
+LOAD e a
+RESET a
+INC a
+LOAD f a
+SUB f e
+JZERO f 2
+JUMP 2
+JUMP 4
+RESET d
+PUT d
+JUMP 5
+RESET d
+INC d
+SHL d
+PUT d
+HALT

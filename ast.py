@@ -25,7 +25,7 @@ class Manager:
 	def addVariableToArray(self, identifier, variable, lineno):
 		if identifier in self.arrays:
 			self.variables[variable] = variable
-			self.variablesMemoryStore += f"{self.writeVariable(variable, 'a')}STORE a a\n"
+			self.variablesMemoryStore += f"{self.writeVariable(self.arrays[identifier][0]+variable, 'a')}STORE a a\n"
 		else:
 			raise Exception(f"Error. Array: {identifier}, doesn't exist. In line: {lineno}")
 
@@ -70,6 +70,7 @@ class Manager:
 		print("LV", variable, self.variables)
 		if variable[0] == "number":
 			if variable[1] not in self.variables:
+				print("kekw")
 				self.addVariable(variable[1], lineno)
 			return f"{self.writeVariable(self.variables[variable[1]], 'a')}LOAD {register} a\n"
 		elif variable[0] == "id":
@@ -83,7 +84,13 @@ class Manager:
 		elif data[0] == "array":
 			self.checkArray(data[1], lineno)
 			print("LDMA: ", self.arrays[data[1]][0], data[2][1])
-			return f"{self.writeVariable(self.arrays[data[1]][0]+data[2][1], 'a')}LOAD {register} a\n"
+			pos = data[2][1]
+			if data[2][0] == "id":
+				pos = self.variables[data[2][1]]
+			return f"{self.writeVariable(self.arrays[data[1]][0]+pos, 'a')}LOAD {register} a\n"
+
+	def loadIterator(self, data, register, lineno):
+		return f"{self.writeVariable(self.variables[data], 'a')}LOAD {register} a\n"
 
 	def writeVariable(self, number, register):
 		string, array = "", []
@@ -114,6 +121,11 @@ class Manager:
 	def checkVariableInitialization(self, identifier, lineno):
 		if identifier not in self.initializedIdentifiers:
 			raise Exception(f"Error. Variable {identifier} isn't initialized. Line: {lineno}")
+
+	def lengthOfCommands(self, array):
+		loc = sum([len(i.split("\n")) for i in array])
+		print("LOC", loc)
+		return loc
 
 
 manager = Manager()

@@ -23,7 +23,7 @@ class CompilerParser(Parser):
 	def program(self, token):
 		if self.debug:
 			print(f"Program1: {token.commands}")
-		return Program(commands=token.commands)
+		return token.commands
 
 	# Declarations
 	@_("declarations ',' ID")
@@ -78,13 +78,13 @@ class CompilerParser(Parser):
 	def command(self, token):
 		if self.debug:
 			print(f"Command1, condition: {token.cond}, Commands: {token.commands0, token.commands1}")
-		return CommandIf(token.lineno, token.cond, token.commands0, commandElse=token.commands1)
+		return f"{token.cond}{manager.lengthOfCommands(token.commands0)+1}\n{''.join(token.commands0)}JUMP {manager.lengthOfCommands(token.commands1)}\n{''.join(token.commands1)}"
 
 	@_("IF cond THEN commands ENDIF")
 	def command(self, token):
 		if self.debug:
 			print(f"Command2, condition: {token.cond}, Commands: {token.commands}")
-		return CommandIf(token.lineno, token.cond, token.commands)
+		return f"{token.cond}{manager.lengthOfCommands(token.commands)}\n{''.join(token.commands)}"
 
 	@_("WHILE cond DO commands ENDWHILE")
 	def command(self, token):
@@ -95,32 +95,32 @@ class CompilerParser(Parser):
 	@_("REPEAT commands UNTIL cond ';'")
 	def command(self, token):
 		if self.debug:
-			print(f"Command3, condition: {token.cond}, Commands: {token.commands}")
+			print(f"Command4, condition: {token.cond}, Commands: {token.commands}")
 		return token
 
 	@_("FOR iter FROM value TO value DO commands ENDFOR")
 	def command(self, token):
 		if self.debug:
-			print(f"Command3, iterator: {token.iter}, Values: {token.value0, token.value1}, Commands: {token.commands}")
-		return CommandFor(token.lineno, token.iter, token.value0, token.value1, token.commands)
+			print(f"Command5, iterator: {token.iter}, Values: {token.value0, token.value1}, Commands: {token.commands}")
+		return f"{manager.loadIterator(token.iter, 'c', token.lineno)}{manager.loadVariable(token.value0, 'b', token.lineno)}{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'f', token.lineno)}INC b\nSUB f b\nJZERO f {manager.lengthOfCommands(token.commands)}\n{''.join(token.commands)}\nJUMP -{manager.lengthOfCommands(token.commands)}\n"
 
 	@_("FOR iter FROM value DOWNTO value DO commands ENDFOR")
 	def command(self, token):
 		if self.debug:
-			print(f"Command4, iterator: {token.iter}, Values: {token.value0, token.value1}, Commands: {token.commands}")
-		return CommandFor(token.lineno, token.iter, token.value0, token.value1, token.commands, downTo=True)
+			print(f"Command6, iterator: {token.iter}, Values: {token.value0, token.value1}, Commands: {token.commands}")
+		return token
 
 	@_("READ id ';'")
 	def command(self, token):
 		if self.debug:
-			print(f"Command5, read identifier: {token.id}")
+			print(f"Command7, read identifier: {token.id}")
 		manager.initializedIdentifiers[token.id[1]] = True
 		return f"{manager.loadVariable(token.id, 'a', token.lineno)}GET a\n"
 
 	@_("WRITE value ';'")
 	def command(self, token):
 		if self.debug:
-			print(f"Command6, write value: {token.value}")
+			print(f"Command8, write value: {token.value}")
 		print("WR", token.value)
 		return f"{manager.writeVariable(manager.getVariableAddress(token.value), 'd')}PUT d\n"
 
@@ -190,13 +190,13 @@ class CompilerParser(Parser):
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond4, values: {token.value0, token.value1}")
-		return ConditionLt(token.lineno, token.value0, token.value1)
+		return f"{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'f', token.lineno)}SUB f e\nJZERO f 2\nJUMP 2\nJUMP "
 
 	@_("value GT value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond5, values: {token.value0, token.value1}")
-		return ConditionGt(token.lineno, token.value0, token.value1)
+		return f"{manager.loadVariable(token.value0, 'e', token.lineno)}{manager.loadVariable(token.value1, 'f', token.lineno)}SUB e f\nJZERO e 2\nJUMP 2\nJUMP "
 
 	# Value
 	@_("NUM")
