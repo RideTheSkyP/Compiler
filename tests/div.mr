@@ -42,13 +42,14 @@ INC a
 SHL a
 INC a
 LOAD f a
+JZERO f 8
 JZERO e 7
 SUB f e
 JZERO f 2
 JUMP 2
 INC c
 SUB e b
-JUMP -7
+JUMP -8
 RESET b
 INC b
 STORE c b

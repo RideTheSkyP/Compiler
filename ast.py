@@ -1,6 +1,5 @@
 class Manager:
 	def __init__(self):
-		self.filename = "1.txt"
 		self.variables = {}
 		self.arrays = {}
 		self.initializedIdentifiers = {}
@@ -8,26 +7,19 @@ class Manager:
 		self.memoryCounter = -1
 
 	def addVariable(self, identifier, lineno):
-		reg = "a"
 		if identifier not in self.variables:
 			self.memoryCounter += 1
 			self.variables[identifier] = self.memoryCounter
 			# print("AV:", identifier, self.variables[identifier], self.variables)
 			if type(identifier) == int:
 				self.variablesMemoryStore += f"{self.writeVariable(identifier, 'b')}"
-				reg = "b"
-			self.variablesMemoryStore += f"{self.writeVariable(self.variables[identifier], 'a')}STORE {reg} a\n"
+			else:
+				self.variablesMemoryStore += f"{self.writeVariable(0, 'b')}"
+			self.variablesMemoryStore += f"{self.writeVariable(self.variables[identifier], 'a')}STORE b a\n"
 		elif type(identifier) == int:
-			return ""
+			pass
 		else:
 			raise Exception(f"Trying to initialize an existing variable: {identifier}. In line: {lineno}")
-
-	def addVariableToArray(self, identifier, variable, lineno):
-		if identifier in self.arrays:
-			self.variables[variable] = variable
-			self.variablesMemoryStore += f"{self.writeVariable(self.arrays[identifier][0]+variable, 'a')}STORE a a\n"
-		else:
-			raise Exception(f"Error. Array: {identifier}, doesn't exist. In line: {lineno}")
 
 	def deleteVariable(self, identifier, lineno):
 		if identifier not in self.variables:
@@ -35,23 +27,26 @@ class Manager:
 		self.variables.pop(identifier)
 
 	def getVariableAddress(self, identifier):
-		print("gVA: ", self.variables, identifier)
+		print("gVA: ", self.variables, self.arrays, identifier)
 		try:
-			position = identifier[2][1]
-			if identifier[1] in self.arrays:
-				if type(position) is not int:
-					position = self.variables[identifier[2][1]]
-				# if (position < self.arrays[identifier[1]][1]) or (position > self.arrays[identifier[1]][2]):
-				# 	raise Exception(f"Trying to access variable: {position}, which is not in array: {identifier[1]}")
-				# else:
-				return self.arrays[identifier[1]][0] + position
+			if identifier[2][0] == "id":
+				pos = self.variables[identifier[2][1]]
+				print("POS", pos, self.arrays[identifier[1]][0], self.loadVariable(identifier[2], 'b', None))
+				print(f"KEKU\n{self.writeVariable(self.arrays[identifier[1]][0], 'f')}{self.loadVariable(identifier[2], 'd', None)}ADD d f\nKOKU\n")
+				# load var
+				return f"{self.writeVariable(self.arrays[identifier[1]][0], 'f')}{self.loadVariable(identifier[2], 'd', None)}ADD d f\n"
+			elif identifier[2][0] == "number":
+				pos = self.arrays[identifier[1]][0] + identifier[2][1]
+				print("POS", identifier[1], pos)
+				return self.writeVariable(pos, "d")
+
 			else:
 				raise Exception(f"Trying to access non-existing array: {identifier[1]}")
 		except:
 			if identifier[1] not in self.variables:
 				raise Exception(f"Trying to access non-existing variable: {identifier[1]}")
 			else:
-				return self.variables[identifier[1]]
+				return self.writeVariable(self.variables[identifier[1]], "d")
 
 	def addArray(self, identifier, lineno, start, stop):
 		# print(f"AddArray: {identifier, lineno, start, stop}")
@@ -67,10 +62,9 @@ class Manager:
 			return self.arrays[identifier]
 
 	def loadVariable(self, variable, register, lineno):
-		print("LV", variable, self.variables)
+		# print("LV", variable, self.variables)
 		if variable[0] == "number":
 			if variable[1] not in self.variables:
-				print("kekw")
 				self.addVariable(variable[1], lineno)
 			return f"{self.writeVariable(self.variables[variable[1]], 'a')}LOAD {register} a\n"
 		elif variable[0] == "id":
@@ -83,14 +77,18 @@ class Manager:
 			return f"{self.writeVariable(self.variables[data[1]], 'a')}LOAD {register} a\n"
 		elif data[0] == "array":
 			self.checkArray(data[1], lineno)
-			print("LDMA: ", self.arrays[data[1]][0], data[2][1])
+			# print("LDMA: ", self.arrays[data[1]][0], data[2][1])
 			pos = data[2][1]
 			if data[2][0] == "id":
 				pos = self.variables[data[2][1]]
-			return f"{self.writeVariable(self.arrays[data[1]][0]+pos, 'a')}LOAD {register} a\n"
+				print("ldmaId", pos, self.arrays[data[1]])
 
-	def loadIterator(self, data, register, lineno):
-		return f"{self.writeVariable(self.variables[data], 'a')}LOAD {register} a\n"
+			# return f"{self.writeVariable(self.arrays[identifier[1]][0], 'f')}{self.loadVariable(identifier[2], 'd', None)}ADD d f\n"
+
+			return f"{self.writeVariable(self.arrays[data[1]][0], 'f')}{self.loadVariable(data[2], 'd', None)}ADD d f\nLOAD {register} d\n"
+
+	def storeIterator(self, data, register, lineno):
+		return f"{self.writeVariable(self.variables[data], 'a')}STORE {register} a\n"
 
 	def writeVariable(self, number, register):
 		string, array = "", []
@@ -123,140 +121,8 @@ class Manager:
 			raise Exception(f"Error. Variable {identifier} isn't initialized. Line: {lineno}")
 
 	def lengthOfCommands(self, array):
-		print(array, type(array))
 		if type(array) == list:
-			loc = sum([len(i.split("\n")) for i in array])
+			loc = sum([len(i.splitlines()) for i in array])
 		else:
-			loc = len(array.split("\n"))
-			print("ARKA: ", array)
-		print("LOC", loc)
+			loc = len(array.splitlines())
 		return loc
-
-
-manager = Manager()
-
-
-class Program:
-	def __init__(self, declarations=None, commands=None):
-		self.declarations = declarations
-		self.commands = commands
-		self.print()
-
-	def print(self):
-		print(self.declarations)
-		print(self.commands)
-
-
-class CommandIf:
-	def __init__(self, lineno, cond, commandIf, commandElse=None):
-		self.lineno = lineno
-		self.cond = cond
-		self.commandIf = commandIf
-		self.commandElse = commandElse
-		self.print()
-
-	def print(self):
-		print(f"CommandIf: {self.lineno, self.cond, self.commandIf, self.commandElse}")
-
-
-class CommandWhile:
-	def __init__(self, lineno, cond, commands):
-		self.lineno = lineno
-		self.cond = cond
-		self.commands = commands
-		self.print()
-
-	def print(self):
-		print(f"CommandWhile: {self.lineno, self.cond, self.commands}")
-
-
-class CommandRepeat:
-	def __init__(self, lineno, cond, commands):
-		self.lineno = lineno
-		self.cond = cond
-		self.commands = commands
-		self.print()
-
-	def print(self):
-		print(f"CommandRepeat: {self.lineno, self.cond, self.commands}")
-
-
-class CommandFor:
-	def __init__(self, lineno, iterator, valueFrom, valueTo, commands, downTo=False):
-		self.lineno = lineno
-		self.iterator = iterator
-		self.valueFrom = valueFrom
-		self.valueTo = valueTo
-		self.commands = commands
-		self.downTo = downTo
-		self.print()
-
-	def print(self):
-		print(f"CommandFor: {self.lineno, self.iterator, self.valueFrom, self.valueTo, self.commands, self.downTo}")
-
-
-class ConditionEq:
-	def __init__(self, lineno, value0, value1):
-		self.lineno = lineno
-		self.value0 = value0
-		self.value1 = value1
-		self.print()
-
-	def print(self):
-		print(f"ConditionEq: {self.lineno, self.value0, self.value1}")
-
-
-class ConditionNeq:
-	def __init__(self, lineno, value0, value1):
-		self.lineno = lineno
-		self.value0 = value0
-		self.value1 = value1
-		self.print()
-
-	def print(self):
-		print(f"ConditionNeq: {self.lineno, self.value0, self.value1}")
-
-
-class ConditionLte:
-	def __init__(self, lineno, value0, value1):
-		self.lineno = lineno
-		self.value0 = value0
-		self.value1 = value1
-		self.print()
-
-	def print(self):
-		print(f"ConditionLte: {self.lineno, self.value0, self.value1}")
-
-
-class ConditionGte:
-	def __init__(self, lineno, value0, value1):
-		self.lineno = lineno
-		self.value0 = value0
-		self.value1 = value1
-		self.print()
-
-	def print(self):
-		print(f"ConditionGte: {self.lineno, self.value0, self.value1}")
-
-
-class ConditionLt:
-	def __init__(self, lineno, value0, value1):
-		self.lineno = lineno
-		self.value0 = value0
-		self.value1 = value1
-		self.print()
-
-	def print(self):
-		print(f"ConditionLt: {self.lineno, self.value0, self.value1}")
-
-
-class ConditionGt:
-	def __init__(self, lineno, value0, value1):
-		self.lineno = lineno
-		self.value0 = value0
-		self.value1 = value1
-		self.print()
-
-	def print(self):
-		print(f"ConditionGt: {self.lineno, self.value0, self.value1}")
-		print(f"{manager.loadVariable(self.value0, 'a', self.lineno)}{manager.loadVariable(self.value1, 'b', self.lineno)}SUB a b\nJZERO a ?\n")
