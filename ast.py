@@ -10,6 +10,7 @@ class Manager:
 		if identifier not in self.variables:
 			self.memoryCounter += 1
 			self.variables[identifier] = self.memoryCounter
+			# print("AV:", identifier, self.variables[identifier], self.variables)
 			if type(identifier) == int:
 				self.variablesMemoryStore += f"{self.writeVariable(identifier, 'b')}"
 			else:
@@ -26,12 +27,17 @@ class Manager:
 		self.variables.pop(identifier)
 
 	def getVariableAddress(self, identifier):
+		print("gVA: ", self.variables, self.arrays, identifier)
 		try:
 			if identifier[2][0] == "id":
 				pos = self.variables[identifier[2][1]]
+				print("POS", pos, self.arrays[identifier[1]][0], self.loadVariable(identifier[2], 'b', None))
+				print(f"KEKU\n{self.writeVariable(self.arrays[identifier[1]][0], 'f')}{self.loadVariable(identifier[2], 'd', None)}ADD d f\nKOKU\n")
+				# load var
 				return f"{self.writeVariable(self.arrays[identifier[1]][0], 'f')}{self.loadVariable(identifier[2], 'd', None)}ADD d f\n"
 			elif identifier[2][0] == "number":
 				pos = self.arrays[identifier[1]][0] + identifier[2][1]
+				print("POS", identifier[1], pos)
 				return self.writeVariable(pos, "d")
 
 			else:
@@ -43,6 +49,7 @@ class Manager:
 				return self.writeVariable(self.variables[identifier[1]], "d")
 
 	def addArray(self, identifier, lineno, start, stop):
+		# print(f"AddArray: {identifier, lineno, start, stop}")
 		if stop < start:
 			raise Exception(f"Wrong array declaration: {identifier}. In line: {lineno}")
 		self.arrays[identifier] = (self.memoryCounter + 1, start, stop)
@@ -55,6 +62,7 @@ class Manager:
 			return self.arrays[identifier]
 
 	def loadVariable(self, variable, register, lineno):
+		# print("LV", variable, self.variables)
 		if variable[0] == "number":
 			if variable[1] not in self.variables:
 				self.addVariable(variable[1], lineno)
@@ -69,11 +77,18 @@ class Manager:
 			return f"{self.writeVariable(self.variables[data[1]], 'a')}LOAD {register} a\n"
 		elif data[0] == "array":
 			self.checkArray(data[1], lineno)
+			# print("LDMA: ", self.arrays[data[1]][0], data[2][1])
 			pos = data[2][1]
 			if data[2][0] == "id":
 				pos = self.variables[data[2][1]]
+				print("ldmaId", pos, self.arrays[data[1]])
+
+			# return f"{self.writeVariable(self.arrays[identifier[1]][0], 'f')}{self.loadVariable(identifier[2], 'd', None)}ADD d f\n"
 
 			return f"{self.writeVariable(self.arrays[data[1]][0], 'f')}{self.loadVariable(data[2], 'd', None)}ADD d f\nLOAD {register} d\n"
+
+	def storeIterator(self, data, register, lineno):
+		return f"{self.writeVariable(self.variables[data], 'a')}STORE {register} a\n"
 
 	def writeVariable(self, number, register):
 		string, array = "", []

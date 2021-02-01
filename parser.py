@@ -8,7 +8,7 @@ class CompilerParser(Parser):
 	tokens = CompilerLexer.tokens
 
 	def __init__(self):
-		self.debug = False
+		self.debug = True
 		self.manager = Manager()
 
 	# Program
@@ -16,6 +16,7 @@ class CompilerParser(Parser):
 	def program(self, token):
 		if self.debug:
 			print(f"Program0: {token.declarations}, Instructions: {token.commands}")
+		# print(self.manager.variablesMemoryStore)
 		return token.commands
 
 	@_("BEGIN commands END")
@@ -69,29 +70,26 @@ class CompilerParser(Parser):
 		if self.debug:
 			print(f"Command0, ID: {token.id}, Expression: {token.expr}. Lineno: {token.lineno}")
 		self.manager.initializedIdentifiers[token.id[1]] = True
+		# print(token.expr, "tokenID", token.id)
 		return f"{token.expr}{self.manager.getVariableAddress(token.id)}STORE c d\n"
 
 	@_("IF cond THEN commands ELSE commands ENDIF")
 	def command(self, token):
 		if self.debug:
 			print(f"Command1, condition: {token.cond}, Commands: {token.commands0, token.commands1}")
-		comm0Len = self.manager.lengthOfCommands(token.commands0)
-		comm1Len = self.manager.lengthOfCommands(token.commands1)
-		return f"{token.cond}{comm0Len+2}\n{''.join(token.commands0)}JUMP {comm1Len+1}\n{''.join(token.commands1)}"
+		return f"{token.cond}{self.manager.lengthOfCommands(token.commands0)}\n{''.join(token.commands0)}JUMP {self.manager.lengthOfCommands(token.commands1)+1}\n{''.join(token.commands1)}"
 
 	@_("IF cond THEN commands ENDIF")
 	def command(self, token):
 		if self.debug:
 			print(f"Command2, condition: {token.cond}, Commands: {token.commands}")
-		return f"{token.cond}{self.manager.lengthOfCommands(token.commands)+1}\n{''.join(token.commands)}"
+		return f"{token.cond}{self.manager.lengthOfCommands(token.commands)}\n{''.join(token.commands)}"
 
 	@_("WHILE cond DO commands ENDWHILE")
 	def command(self, token):
 		if self.debug:
 			print(f"Command3, condition: {token.cond}, Commands: {token.commands}")
-		commandsLen = self.manager.lengthOfCommands(token.commands)
-		condLen = self.manager.lengthOfCommands(token.cond)
-		return f"{token.cond}{commandsLen+2}\n{''.join(token.commands)}JUMP -{commandsLen+condLen}\n"
+		return f"{token.cond}{self.manager.lengthOfCommands(token.commands)+2}\n{''.join(token.commands)}JUMP -{self.manager.lengthOfCommands(token.commands)+self.manager.lengthOfCommands(token.cond)}\n"
 
 	@_("REPEAT commands UNTIL cond ';'")
 	def command(self, token):
@@ -108,7 +106,7 @@ class CompilerParser(Parser):
 		self.manager.addVariable(f"endfor{token.value1[1]}", token.lineno)
 		self.manager.initializedIdentifiers[f"endfor{token.value1[1]}"] = True
 		loadE = self.manager.loadVariable(("id", f"endfor{token.value1[1]}"), "e", token.lineno)
-		loadEaddr = self.manager.writeVariable(self.manager.variables[f"endfor{token.value1[1]}"], "a")
+		varEAddr = self.manager.writeVariable(self.manager.variables[f"endfor{token.value1[1]}"], "a")
 		varF = self.manager.loadVariable(token.value0, "f", token.lineno)
 		varE = self.manager.loadVariable(token.value1, "e", token.lineno)
 		self.manager.deleteVariable(f"endfor{token.value1[1]}", token.lineno)
@@ -116,26 +114,20 @@ class CompilerParser(Parser):
 		commandsLen = self.manager.lengthOfCommands(token.commands)
 		loadIterLen = self.manager.lengthOfCommands(loadIter)
 		loadELen = self.manager.lengthOfCommands(loadE)
-		return f"RESET b\n{varF}{iterAddr}STORE f a\n{varE}{loadEaddr}STORE e a\n{loadIter}{loadE}SUB b e\nJZERO b 2\nJUMP {commandsLen+loadIterLen+4}\n{''.join(token.commands)}{loadIter}INC b\nSTORE b a\nJUMP -{commandsLen+loadIterLen*2+loadELen+5}\n"
+		return f"{varF}{iterAddr}STORE f a\n{varE}{varEAddr}STORE e a\n{loadIter}{loadE}SUB b e\nJZERO b 2\nJUMP {commandsLen+loadIterLen+4}\n{''.join(token.commands)}{loadIter}INC b\nSTORE b a\nJUMP -{commandsLen+loadIterLen*2+loadELen+5}\n"
 
 	@_("FOR iter FROM value DOWNTO value DO commands ENDFOR")
 	def command(self, token):
 		if self.debug:
 			print(f"Command6, iterator: {token.iter}, Values: {token.value0, token.value1}, Commands: {token.commands}")
 		loadIter = self.manager.loadVariable(("id", token.iter), "b", token.lineno)
-		iterAddr = self.manager.writeVariable(self.manager.variables[token.iter], "a")
-		self.manager.addVariable(f"endfor{token.value1[1]}", token.lineno)
-		self.manager.initializedIdentifiers[f"endfor{token.value1[1]}"] = True
-		loadEnd = self.manager.loadVariable(("id", f"endfor{token.value1[1]}"), "e", token.lineno)
-		loadEndAddr = self.manager.writeVariable(self.manager.variables[f"endfor{token.value1[1]}"], "a")
-		varF = self.manager.loadVariable(token.value0, "f", token.lineno)
-		varE = self.manager.loadVariable(token.value1, "e", token.lineno)
+		storeIter = self.manager.storeIterator(token.iter, "e", token.lineno)
+		varE = self.manager.loadVariable(token.value0, "e", token.lineno)
+		varF = self.manager.loadVariable(token.value1, "f", token.lineno)
 		self.manager.deleteVariable(token.iter, token.lineno)
-		self.manager.deleteVariable(f"endfor{token.value1[1]}", token.lineno)
 		commandsLen = self.manager.lengthOfCommands(token.commands)
 		loadIterLen = self.manager.lengthOfCommands(loadIter)
-		loadEndLen = self.manager.lengthOfCommands(loadEnd)
-		return f"RESET b\n{varF}{iterAddr}STORE f a\n{varE}{loadEndAddr}STORE e a\n{loadIter}{loadEnd}SUB e b\nJZERO e 2\nJUMP {commandsLen + loadIterLen + 4}\n{''.join(token.commands)}{loadIter}DEC b\nSTORE b a\nJUMP -{commandsLen + loadIterLen * 2 + loadEndLen + 5}\n"
+		return f"{varE}{storeIter}{loadIter}{varF}SUB b e\nJZERO b 2\nJUMP {commandsLen+loadIterLen*2+6}\n{''.join(token.commands)}{loadIter}SUB b f\nJZERO b {loadIterLen+4}\n{loadIter}DEC b\nSTORE b a\nJUMP -{commandsLen+loadIterLen*2+7}\n"
 
 	@_("READ id ';'")
 	def command(self, token):
@@ -171,6 +163,7 @@ class CompilerParser(Parser):
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression2, values: {token.value0, token.value1}")
+		# loadC = self.manager.loadVariable(token.value0, 'c', token.lineno)
 		loadE = self.manager.loadVariable(token.value0, "e", token.lineno)
 		loadF = self.manager.loadVariable(token.value1, "f", token.lineno)
 		return f"RESET c\n{loadE}{loadF}JZERO f 8\nJODD f 4\nSHL e\nSHR f\nJUMP -3\nADD c e\nDEC f\nJUMP -7\n"
@@ -181,6 +174,13 @@ class CompilerParser(Parser):
 			print(f"Expression3, values: {token.value0, token.value1}")
 		loadE = self.manager.loadVariable(token.value0, "e", token.lineno)
 		loadF = self.manager.loadVariable(token.value1, "f", token.lineno)
+		loadElen = self.manager.lengthOfCommands(loadE)
+		loadFlen = self.manager.lengthOfCommands(loadF)
+		# return f"{loadE}{loadF}RESET b\nRESET c\nSUB e f\nJZERO e {loadFlen+loadElen+22}\n{loadE}{loadF}JZERO e 23\nJZERO f 22\nADD b f\nINC c\nSHL f\nRESET d\nADD d e\nSUB d f\nJZERO d 4\nSUB e f\nSHL c\nJUMP -7\nRESET d\nADD d b\nSUB d e\nJZERO d 2\nJUMP 5\nSUB e b\nINC c\nJZERO e 2\nJUMP -8\n"
+		# return f"{loadE}RESET b\nADD b e\nRESET c\n{loadF}JZERO e {loadFlen*2+33}\nJZERO f {loadFlen*2+32}\nINC c\nSUB b f\nJZERO b 2\nJUMP 3\nSUB f e\nJZERO f 2\nJUMP {loadFlen*2+22}\nRESET b\nADD b e\n{loadF}ADD f b\nJZERO f 2\nJUMP {loadFlen+20}\n{loadF}RESET b\nADD b f\nSHL f\nRESET d\nADD d e\nSUB d f\nJZERO d 4\nSUB e f\nSHL c\nJUMP -7\nRESET d\nADD d b\nSUB d e\nJZERO d 2\nJUMP 5\nSUB e b\nINC c\nJZERO e 2\nJUMP -8\n"
+		## Works div
+		# return f"{loadE}{loadF}RESET b\nADD b f\nRESET c\nJZERO e 21\nJZERO f 20\nINC c\nSHL f\nRESET d\nADD d e\nSUB d f\nJZERO d 4\nSUB e f\nSHL c\nJUMP -8\nRESET d\nADD d b\nSUB d e\nJZERO d 2\nJUMP 5\nSUB e b\nINC c\nJZERO e 2\nJUMP -8\nDEC c\n"
+
 		return f"{loadE}{loadF}RESET b\nADD b f\nRESET c\nJZERO e 21\nJZERO f 20\nINC c\nSHL f\nRESET d\nADD d e\nSUB d f\nJZERO d 4\nSUB e f\nSHL c\nJUMP -8\nRESET d\nADD d b\nSUB d e\nJZERO d 2\nJUMP 5\nSUB e b\nINC c\nJZERO e 2\nJUMP -8\nDEC c\n"
 
 	@_("value MOD value")
@@ -191,7 +191,7 @@ class CompilerParser(Parser):
 		loadF = self.manager.loadVariable(token.value1, "f", token.lineno)
 		loadElen = self.manager.lengthOfCommands(loadE)
 		loadFlen = self.manager.lengthOfCommands(loadF)
-		return f"{loadE}{loadF}RESET c\nRESET b\nADD b f\nJZERO e {loadFlen+23}\nJZERO f {loadFlen+22}\nSUB f e\nJZERO f 3\nADD c e\nJUMP {loadFlen+18}\n{loadF}SHL f\nRESET d\nADD d e\nSUB d f\nJZERO d 3\nSUB e f\nJUMP -6\nRESET d\nADD d b\nSUB d e\nJZERO d 4\nSUB b d\nADD c b\nJUMP 4\nSUB e b\nJZERO e 2\nJUMP -9\n"
+		return f"{loadE}RESET b\nADD b e\nRESET c\n{loadF}JZERO e {loadElen+loadFlen+31}\nJZERO f {loadElen+loadFlen+30}\nSUB e f\nJZERO e 2\nJUMP 3\nSUB f b\nJZERO f {loadElen+loadFlen+25}\n{loadF}{loadE}SUB b f\nJZERO b 2\nJUMP 3\nADD c e\nJUMP 20\nRESET b\nADD b f\nSHL f\nRESET d\nADD d e\nSUB d f\nJZERO d 3\nSUB e f\nJUMP -6\nRESET d\nADD d b\nSUB d e\nJZERO d 2\nJUMP 6\nSUB e b\nRESET c\nADD c e\nJZERO e 2\nJUMP -9\n"
 
 	@_("value")
 	def expr(self, token):
@@ -206,7 +206,7 @@ class CompilerParser(Parser):
 			print(f"Cond0, values: {token.value0, token.value1}")
 		loadE = self.manager.loadVariable(token.value0, 'e', token.lineno)
 		loadF = self.manager.loadVariable(token.value1, 'f', token.lineno)
-		return f"{loadE}RESET d\nADD d e\n{loadF}SUB d f\nJZERO d 2\nJUMP 3\nSUB f e\nJZERO f 2\nJUMP "
+		return f"{loadE}RESET b\nADD b e\n{loadF}SUB b f\nJZERO b 2\nJUMP 3\nSUB f e\nJZERO f 2\nJUMP "
 
 	@_("value NEQ value")
 	def cond(self, token):
@@ -214,38 +214,38 @@ class CompilerParser(Parser):
 			print(f"Cond1, values: {token.value0, token.value1}")
 		loadE = self.manager.loadVariable(token.value0, 'e', token.lineno)
 		loadF = self.manager.loadVariable(token.value1, 'f', token.lineno)
-		return f"{loadE}RESET d\nADD d e\n{loadF}SUB d f\nJZERO d 2\nJUMP 3\nSUB f e\nJZERO f "
+		return f"{loadE}RESET b\nADD b e\n{loadF}SUB b f\nJZERO b 2\nJUMP 3\nSUB f e\nJZERO f "
 
 	@_("value LTE value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond2, values: {token.value0, token.value1}")
-		loadE = self.manager.loadVariable(token.value0, "e", token.lineno)
-		loadF = self.manager.loadVariable(token.value1, "f", token.lineno)
+		loadE = self.manager.loadVariable(token.value0, 'e', token.lineno)
+		loadF = self.manager.loadVariable(token.value1, 'f', token.lineno)
 		return f"{loadE}{loadF}SUB e f\nJZERO e 2\nJUMP "
 
 	@_("value GTE value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond3, values: {token.value0, token.value1}")
-		loadE = self.manager.loadVariable(token.value0, "e", token.lineno)
-		loadF = self.manager.loadVariable(token.value1, "f", token.lineno)
+		loadE = self.manager.loadVariable(token.value0, 'e', token.lineno)
+		loadF = self.manager.loadVariable(token.value1, 'f', token.lineno)
 		return f"{loadE}{loadF}SUB f e\nJZERO f 2\nJUMP "
 
 	@_("value LT value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond4, values: {token.value0, token.value1}")
-		loadE = self.manager.loadVariable(token.value0, "e", token.lineno)
-		loadF = self.manager.loadVariable(token.value1, "f", token.lineno)
+		loadE = self.manager.loadVariable(token.value0, 'e', token.lineno)
+		loadF = self.manager.loadVariable(token.value1, 'f', token.lineno)
 		return f"{loadE}{loadF}SUB f e\nJZERO f 2\nJUMP 2\nJUMP "
 
 	@_("value GT value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond5, values: {token.value0, token.value1}")
-		loadE = self.manager.loadVariable(token.value0, "e", token.lineno)
-		loadF = self.manager.loadVariable(token.value1, "f", token.lineno)
+		loadE = self.manager.loadVariable(token.value0, 'e', token.lineno)
+		loadF = self.manager.loadVariable(token.value1, 'f', token.lineno)
 		return f"{loadE}{loadF}SUB e f\nJZERO e 2\nJUMP 2\nJUMP "
 
 	# Value
@@ -287,4 +287,5 @@ class CompilerParser(Parser):
 	def id(self, token):
 		if self.debug:
 			print(f"Identifier3: {token.ID}, Number: {token.NUM}")
+		# self.manager.addVariableToArray(token.ID, token.NUM, token.lineno)
 		return "array", token.ID, ("number", token.NUM)
