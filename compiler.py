@@ -1,4 +1,3 @@
-import os
 from lexer import CompilerLexer
 from parser import CompilerParser
 import sys
@@ -16,6 +15,8 @@ if __name__ == "__main__":
 			with open(filename, "w") as fw:
 				fw.write(writeToFile)
 				print(f"Saved to {filename} successfully")
-	except:
+	except Exception as e:
 		print("Usage: python3 compiler.py [test file name] [output file name]")
+		print(f"Exception: {e}")
+
 

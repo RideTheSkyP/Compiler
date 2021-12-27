@@ -1,7 +1,6 @@
 from sly import Parser
 from lexer import CompilerLexer
-# from ast import Manager
-from ast import Manager
+from astree import Manager
 
 
 class CompilerParser(Parser):
@@ -12,7 +11,7 @@ class CompilerParser(Parser):
 		self.manager = Manager()
 
 	# Program
-	@_("DECLARE declarations BEGIN commands END")
+	@_("VAR declarations BEGIN commands END")
 	def program(self, token):
 		if self.debug:
 			print(f"Program0: {token.declarations}, Instructions: {token.commands}")
@@ -31,7 +30,7 @@ class CompilerParser(Parser):
 			print(f"Declarations0, ID: {token.ID}. Lineno: {token.lineno}")
 		self.manager.addVariable(token.ID, token.lineno)
 
-	@_("declarations ',' ID '(' NUM ':' NUM ')'")
+	@_("declarations ',' ID '[' NUM ':' NUM ']'")
 	def declarations(self, token):
 		if self.debug:
 			print(f"Declarations1, ID & array: {token.ID, token.NUM0, token.NUM1}")
@@ -43,7 +42,7 @@ class CompilerParser(Parser):
 			print(f"Declarations2, ID: {token.ID}. Lineno: {token.lineno}")
 		self.manager.addVariable(token.ID, token.lineno)
 
-	@_("ID '(' NUM ':' NUM ')'")
+	@_("ID '[' NUM ':' NUM ']'")
 	def declarations(self, token):
 		if self.debug:
 			print(f"Declarations3, ID & array: {token.ID, token.NUM0, token.NUM1}")
@@ -69,7 +68,7 @@ class CompilerParser(Parser):
 		if self.debug:
 			print(f"Command0, ID: {token.id}, Expression: {token.expr}. Lineno: {token.lineno}")
 		self.manager.initializedIdentifiers[token.id[1]] = True
-		return f"{token.expr}{self.manager.getVariableAddress(token.id)}STORE c d\n"
+		return f"{token.expr}{self.manager.getVariableAddress(token.id)}SWAP c\nSTORE c\n"
 
 	@_("IF cond THEN commands ELSE commands ENDIF")
 	def command(self, token):
@@ -142,32 +141,35 @@ class CompilerParser(Parser):
 		if self.debug:
 			print(f"Command7, read identifier: {token.id}")
 		self.manager.initializedIdentifiers[token.id[1]] = True
-		return f"{self.manager.getVariableAddress(token.id)}GET d\n"
+		print("=================")
+		print(token.id)
+		print(self.manager.getVariableAddress(token.id))
+		return f"{self.manager.getVariableAddress(token.id)}SWAP h\nGET\nSTORE h\n"
 
 	@_("WRITE value ';'")
 	def command(self, token):
 		if self.debug:
 			print(f"Command8, write value: {token.value}")
-		return f"{self.manager.getVariableAddress(token.value)}PUT d\n"
+		return f"{self.manager.getVariableAddress(token.value)}LOAD a\nPUT\n"
 
 	# Expression
-	@_("value ADD value")
+	@_("value PLUS value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression0, values: {token.value0, token.value1}")
-		loadC = self.manager.loadVariable(token.value0, 'c', token.lineno)
-		loadB = self.manager.loadVariable(token.value1, 'b', token.lineno)
-		return f"{loadC}{loadB}ADD c b\n"
+		loadC = f"{self.manager.loadVariable(token.value0, 'c', token.lineno)}"
+		loadB = f"{self.manager.loadVariable(token.value1, 'b', token.lineno)}"
+		return f"{loadC}{loadB}SWAP b\nADD c\nSWAP c\n"
 
-	@_("value SUB value")
+	@_("value MINUS value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression1, values: {token.value0, token.value1}")
 		loadC = self.manager.loadVariable(token.value0, 'c', token.lineno)
 		loadB = self.manager.loadVariable(token.value1, 'b', token.lineno)
-		return f"{loadC}{loadB}SUB c b\n"
+		return f"{loadC}{loadB}SWAP c\nSUB b\nSWAP c\n"
 
-	@_("value MUL value")
+	@_("value TIMES value")
 	def expr(self, token):
 		if self.debug:
 			print(f"Expression2, values: {token.value0, token.value1}")
@@ -216,7 +218,7 @@ class CompilerParser(Parser):
 		loadF = self.manager.loadVariable(token.value1, 'f', token.lineno)
 		return f"{loadE}RESET d\nADD d e\n{loadF}SUB d f\nJZERO d 2\nJUMP 3\nSUB f e\nJZERO f "
 
-	@_("value LTE value")
+	@_("value LEQ value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond2, values: {token.value0, token.value1}")
@@ -224,7 +226,7 @@ class CompilerParser(Parser):
 		loadF = self.manager.loadVariable(token.value1, "f", token.lineno)
 		return f"{loadE}{loadF}SUB e f\nJZERO e 2\nJUMP "
 
-	@_("value GTE value")
+	@_("value GEQ value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond3, values: {token.value0, token.value1}")
@@ -232,7 +234,7 @@ class CompilerParser(Parser):
 		loadF = self.manager.loadVariable(token.value1, "f", token.lineno)
 		return f"{loadE}{loadF}SUB f e\nJZERO f 2\nJUMP "
 
-	@_("value LT value")
+	@_("value LE value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond4, values: {token.value0, token.value1}")
@@ -240,7 +242,7 @@ class CompilerParser(Parser):
 		loadF = self.manager.loadVariable(token.value1, "f", token.lineno)
 		return f"{loadE}{loadF}SUB f e\nJZERO f 2\nJUMP 2\nJUMP "
 
-	@_("value GT value")
+	@_("value GE value")
 	def cond(self, token):
 		if self.debug:
 			print(f"Cond5, values: {token.value0, token.value1}")
@@ -277,13 +279,13 @@ class CompilerParser(Parser):
 			print(f"Identifier1, ID identifier: {token.ID}")
 		return "id", token.ID
 
-	@_("ID '(' ID ')'")
+	@_("ID '[' ID ']'")
 	def id(self, token):
 		if self.debug:
 			print(f"Identifier2, ID identifiers: {token.ID0, token.ID1}")
 		return "array", token.ID0, ("id", token.ID1)
 
-	@_("ID '(' NUM ')'")
+	@_("ID '[' NUM ']'")
 	def id(self, token):
 		if self.debug:
 			print(f"Identifier3: {token.ID}, Number: {token.NUM}")
