@@ -3,6 +3,7 @@ class Manager:
 		self.variables = {}
 		self.arrays = {}
 		self.initializedIdentifiers = {}
+		self.initializedIterators = {}
 		self.variablesMemoryStore = ""
 		self.registers = ["b", "c", "d", "e", "f", "g", "h"]
 		self.memoryCounter = -1
@@ -44,38 +45,46 @@ class Manager:
 		print("getVariableAddress", identifier)
 		try:
 			if identifier[2][0] == "id":
+				self.checkArray(identifier[1], None)
 				pos = self.variables[identifier[2][1]]
-				print("id", pos)
-				return f"{self.writeVariable(self.arrays[identifier[1]][0], 'b')}SWAP f\n{self.loadVariable(identifier[2], 'b', None)}ADD f\n"
+				# print("id", pos, self.arrays[identifier[1]][0], identifier[1], self.arrays[identifier[1]], identifier[2], identifier)
+				ret = f"{self.writeVariable(self.arrays[identifier[1]][3], 'b')}SWAP f\n{self.loadVariable(identifier[2], 'b', None)}SWAP b\nADD f\n"
+				return ret
 			elif identifier[2][0] == "number":
+				self.checkArray(identifier[1], None)
+				self.checkArrayBounds(identifier)
 				pos = self.calculateDistance(identifier)
-				print("number", pos)
+				# print("number", pos)
 				return f"{self.writeVariable(pos, 'b')}"
 			else:
 				raise Exception(f"Trying to access non-existing array: {identifier[1]}")
-		except:
-			print("ex")
+		except Exception as e:
+			print("ex", identifier)
 			if identifier[1] not in self.variables:
-				raise Exception(f"Trying to access non-existing variable: {identifier[1]}")
+				raise Exception(f"Trying to access non-existing variable: {identifier[1]}. {e}.")
+			elif identifier[0] == "array" and identifier[1] in self.variables:
+				raise Exception(f"{e}")
 			else:
 				return f"{self.writeVariable(self.variables[identifier[1]], 'b')}"
 
+
 	def calculateDistance(self, identifier):
-		print("calculateDistance", identifier)
-		memCount = 0
-		for i in range(self.arrays[identifier[1]][1], self.arrays[identifier[1]][2]+1):
-			if i == identifier[2][1]:
-				break
-			memCount += 1
-		pos = self.arrays[identifier[1]][0] + memCount
-		print("pos", pos)
+		print("calculateDistance", identifier, self.arrays[identifier[1]])
+		if "id" == identifier[2][0]:
+			pos = ""
+		else:
+			arraySize = self.arrays[identifier[1]][2] - self.arrays[identifier[1]][1] + 1
+			# print("ARRS", self.arrays[identifier[1]], arraySize)
+			pos = self.arrays[identifier[1]][3] + identifier[2][1]
+		# print("pos", pos)
 		return pos
 
 	def addArray(self, identifier, lineno, start, stop):
 		print("addArray", identifier, lineno, start, stop)
 		if stop < start:
 			raise Exception(f"Wrong array declaration: {identifier}. In line: {lineno}")
-		self.arrays[identifier] = (self.memoryCounter + 1, start, stop)
+		arrayShiftedStart = self.memoryCounter + 1 - start
+		self.arrays[identifier] = (self.memoryCounter + 1, start, stop, arrayShiftedStart)
 		self.memoryCounter += stop - start + 1
 
 	def getArrayData(self, identifier):
@@ -99,12 +108,13 @@ class Manager:
 		print("loadDataMemoryAddress", data, register, lineno)
 		if data[0] == "id":
 			self.checkVariable(data[1], lineno)
-			return f"{self.writeVariable(self.variables[data[1]], register)}LOAD a\nSWAP {register}\n"
+			ret = f"{self.writeVariable(self.variables[data[1]], register)}LOAD a\nSWAP {register}\n"
+			return ret
 		elif data[0] == "array":
 			self.checkArray(data[1], lineno)
-			pos = data[2][1]
 			if data[2][0] == "id":
-				pos = self.variables[data[2][1]]
+				ret = f"{self.writeVariable(self.arrays[data[1]][3], 'b')}SWAP f\n{self.getVariableAddress(data[2])}LOAD a\nADD f\nLOAD a\nSWAP {register}\n"
+				return f"{ret}"
 			return f"{self.writeVariable(self.calculateDistance(data), 'd')}LOAD a\nSWAP {register}\n"
 
 	def writeVariable(self, number, register):
@@ -145,8 +155,22 @@ class Manager:
 
 	def checkVariableInitialization(self, identifier, lineno):
 		print("checkVariableInitialization", identifier, lineno)
-		if identifier not in self.initializedIdentifiers:
+		if type(identifier) == int:
+			pass
+		elif identifier not in self.initializedIdentifiers:
 			raise Exception(f"Error. Variable {identifier} isn't initialized. Line: {lineno}")
+
+	def checkIterator(self, identifier):
+		if identifier[1] in self.initializedIterators:
+			raise Exception("Can't change iterator in the loop!")
+
+	def checkArrayBounds(self, identifier):
+		print("checkArrayBounds", identifier)
+		if identifier[1] not in self.arrays:
+			raise Exception(f"Error. Array {identifier} isn't initialized.")
+		arrayBounds = self.getArrayData(identifier[1])
+		if identifier[2][1] < arrayBounds[1] or identifier[2][1] > arrayBounds[2]:
+			raise Exception(f"Position {identifier[2][1]} is out of bounds of array: {identifier[1]}")
 
 	def lengthOfCommands(self, array):
 		if type(array) == list:
