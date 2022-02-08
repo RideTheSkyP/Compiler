@@ -1,7 +1,0 @@
-DECLARE
-	n, j
-BEGIN
-	n := 21;
-	j := n % 10;
-	WRITE j;
-END

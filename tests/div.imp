@@ -1,7 +1,0 @@
-DECLARE
-	n, j
-BEGIN
-	n := 14;
-	j := n / 3;
-	WRITE j;
-END

@@ -1,9 +1,0 @@
-DECLARE
-    n, j, arr(2:100)
-BEGIN
-    [n := 100;]
-    arr(20) := 1;
-    WRITE arr(20);
-    arr(2) := arr(20);
-    WRITE arr(2);
-END
